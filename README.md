@@ -4,7 +4,7 @@ A Python CLI that takes a snapshot of this Windows machine (OS, CPU, memory, dis
 
 ## Status
 
-Very early, Right now it only prints a placeholder line.
+Very early, the output is still placeholder data, but --json works.
 
 ## How to run
 
