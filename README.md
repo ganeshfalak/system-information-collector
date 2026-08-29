@@ -8,8 +8,10 @@ Very early, Right now it only prints a placeholder line.
 
 ## How to run
 
-From this folder:
+From this folder, once per machine:
 
 ```text
-python -m sysinfo_collector
+python -m venv .venv
+.venv\Scripts\activate
 
+python -m sysinfo_collector
