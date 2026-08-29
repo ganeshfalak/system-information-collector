@@ -13,8 +13,8 @@ The program collects **Windows** info. You can run/develop from Windows or WSL.
 ### Windows
 
 ```text
-python -m venv .venv
-.venv\Scripts\activate
+python -m venv .venv-win
+.venv-win\Scripts\activate
 python -m sysinfo_collector
 ```
 
