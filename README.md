@@ -8,10 +8,20 @@ Very early, Right now it only prints a placeholder line.
 
 ## How to run
 
-From this folder, once per machine:
+The program collects **Windows** info. You can run/develop from Windows or WSL.
+
+### Windows
 
 ```text
 python -m venv .venv
 .venv\Scripts\activate
-
 python -m sysinfo_collector
+```
+
+### WSL
+
+```text
+python3 -m venv .venv-wsl
+source .venv-wsl/bin/activate
+python -m sysinfo_collector
+```
