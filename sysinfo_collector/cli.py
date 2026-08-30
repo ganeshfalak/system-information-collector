@@ -1,7 +1,10 @@
 import argparse
 import json
 
-from .snapshot import fake_snapshot
+
+from .collectors.windows.os_info import collect_os
+from .snapshot import MemoryInfo, Snapshot
+
 
 def build_parser():
     parser = argparse.ArgumentParser(
@@ -18,10 +21,19 @@ def build_parser():
     return parser
 
 
+def build_snapshot():
+
+    return Snapshot(
+        hostname="fake-pc",
+        os=collect_os(),
+        memory=MemoryInfo(total_bytes=17179869198)
+    )
+
+
 def format_text(snapshot):
 
     lines = [
-        "System Information Collector (placeholder)",
+        "System Information Collector",
         f" hostname: {snapshot.hostname}",
         f" os: {snapshot.os.name} {snapshot.os.version}",
         f" memory_total_bytes: {snapshot.memory.total_bytes}",
@@ -39,7 +51,7 @@ def main():
 
     args = parser.parse_args()
 
-    snapshot = fake_snapshot()
+    snapshot = build_snapshot()
 
     if args.json:
         print(format_json(snapshot))
