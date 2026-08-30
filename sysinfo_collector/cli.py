@@ -1,7 +1,7 @@
 import argparse
 import json
 
-
+from .collectors.windows.cpu import collect_cpu
 from .collectors.windows.os_info import collect_os
 from .collectors.windows.memory import collect_memory
 from .collectors.windows.host import collect_hostname
@@ -27,6 +27,7 @@ def build_snapshot():
 
     return Snapshot(
         hostname=collect_hostname(),
+        cpu=collect_cpu(),
         os=collect_os(),
         memory=collect_memory(),
     )
@@ -37,6 +38,7 @@ def format_text(snapshot):
     lines = [
         "System Information Collector",
         f" hostname: {snapshot.hostname}",
+        f" cpu: {snapshot.cpu.name} ({snapshot.cpu.cores} cores)",
         f" os: {snapshot.os.name} {snapshot.os.version}",
         f" memory_total_bytes: {snapshot.memory.total_bytes}",
         f" memory_available_bytes: {snapshot.memory.available_bytes}",
