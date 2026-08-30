@@ -3,6 +3,7 @@ import json
 
 
 from .collectors.windows.os_info import collect_os
+from .collectors.windows.host import collect_hostname
 from .snapshot import MemoryInfo, Snapshot
 
 
@@ -24,7 +25,7 @@ def build_parser():
 def build_snapshot():
 
     return Snapshot(
-        hostname="fake-pc",
+        hostname=collect_hostname(),
         os=collect_os(),
         memory=MemoryInfo(total_bytes=17179869198)
     )
