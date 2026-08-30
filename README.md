@@ -4,7 +4,7 @@ A Python CLI that takes a snapshot of this Windows machine (OS, CPU, memory, dis
 
 ## Status
 
-OS and hostname comes from CIM; memory is still placeholder.
+OS, hostname, and memory comes from CIM.
 
 ## How to run
 

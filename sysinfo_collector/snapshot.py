@@ -8,6 +8,7 @@ class OsInfo:
 @dataclass
 class MemoryInfo:
     total_bytes: int
+    available_bytes: int
 
 @dataclass
 class Snapshot:

@@ -3,8 +3,9 @@ import json
 
 
 from .collectors.windows.os_info import collect_os
+from .collectors.windows.memory import collect_memory
 from .collectors.windows.host import collect_hostname
-from .snapshot import MemoryInfo, Snapshot
+from .snapshot import Snapshot
 
 
 def build_parser():
@@ -27,7 +28,7 @@ def build_snapshot():
     return Snapshot(
         hostname=collect_hostname(),
         os=collect_os(),
-        memory=MemoryInfo(total_bytes=17179869198)
+        memory=collect_memory(),
     )
 
 
@@ -38,6 +39,7 @@ def format_text(snapshot):
         f" hostname: {snapshot.hostname}",
         f" os: {snapshot.os.name} {snapshot.os.version}",
         f" memory_total_bytes: {snapshot.memory.total_bytes}",
+        f" memory_available_bytes: {snapshot.memory.available_bytes}",
     ]
 
     return "\n".join(lines)
