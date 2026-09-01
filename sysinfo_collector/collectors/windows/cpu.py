@@ -13,6 +13,9 @@ def collect_cpu():
 
     data = json.loads(run_powershell(script))
 
+    if isinstance(data, list):
+        data = data[0]
+
     return CpuInfo(
         name=data["Name"].strip(),
         cores=int(data["NumberOfCores"]),
