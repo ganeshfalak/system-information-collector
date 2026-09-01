@@ -2,9 +2,10 @@ import argparse
 import json
 
 from .collectors.windows.cpu import collect_cpu
-from .collectors.windows.os_info import collect_os
-from .collectors.windows.memory import collect_memory
+from .collectors.windows.disk import collect_disk
 from .collectors.windows.host import collect_hostname
+from .collectors.windows.memory import collect_memory
+from .collectors.windows.os_info import collect_os
 from .snapshot import Snapshot
 
 
@@ -30,6 +31,7 @@ def build_snapshot():
         cpu=collect_cpu(),
         os=collect_os(),
         memory=collect_memory(),
+        disks=collect_disk(),
     )
 
 
@@ -43,6 +45,11 @@ def format_text(snapshot):
         f" memory_total_bytes: {snapshot.memory.total_bytes}",
         f" memory_available_bytes: {snapshot.memory.available_bytes}",
     ]
+
+    for disk in snapshot.disks:
+        lines.append(
+            f" disk {disk.name}: {disk.total_bytes} total, {disk.free_bytes} free"
+        )
 
     return "\n".join(lines)
 
