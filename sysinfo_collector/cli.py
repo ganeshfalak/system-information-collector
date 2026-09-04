@@ -6,6 +6,7 @@ from .collectors.windows.disk import collect_disk
 from .collectors.windows.host import collect_hostname
 from .collectors.windows.memory import collect_memory
 from .collectors.windows.os_info import collect_os
+from .collectors.windows.network import collect_network
 from .snapshot import Snapshot
 
 
@@ -32,6 +33,7 @@ def build_snapshot():
         os=collect_os(),
         memory=collect_memory(),
         disks=collect_disk(),
+        network=collect_network(),
     )
 
 
@@ -50,6 +52,9 @@ def format_text(snapshot):
         lines.append(
             f" disk {disk.name}: {disk.total_bytes} total, {disk.free_bytes} free"
         )
+
+    for adapter in snapshot.network:
+        lines.append(f" network {adapter.name}: {adapter.ipv4}")
 
     return "\n".join(lines)
 

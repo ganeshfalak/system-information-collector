@@ -22,12 +22,18 @@ class DiskInfo:
     free_bytes: int
 
 @dataclass
+class NetworkInfo:
+    name: str
+    ipv4: str
+
+@dataclass
 class Snapshot:
     hostname: str
     os: OsInfo
     cpu: CpuInfo
     memory: MemoryInfo
     disks: list[DiskInfo]
+    network: list[NetworkInfo]
 
     def to_dict(self):
         return asdict(self)
