@@ -46,9 +46,10 @@ def format_text(snapshot):
         f" hostname: {snapshot.hostname}",
         f" cpu: {snapshot.cpu.name} ({snapshot.cpu.cores} cores)",
         f" os: {snapshot.os.name} {snapshot.os.version}",
+        f" uptime_seconds: {snapshot.uptime_seconds}",
         f" memory_total_bytes: {snapshot.memory.total_bytes}",
         f" memory_available_bytes: {snapshot.memory.available_bytes}",
-        f" uptime_seconds: {snapshot.uptime_seconds}",
+        
     ]
 
     for disk in snapshot.disks:
