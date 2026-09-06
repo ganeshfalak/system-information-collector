@@ -36,6 +36,7 @@ def build_snapshot():
         disks=collect_disk(),
         network=collect_network(),
         uptime_seconds=collect_uptime(),
+        errors=[],
     )
 
 
@@ -59,6 +60,12 @@ def format_text(snapshot):
 
     for adapter in snapshot.network:
         lines.append(f" network {adapter.name}: {adapter.ipv4}")
+
+    if snapshot.errors:
+        lines.append(" errors:")
+
+        for message in snapshot.errors:
+            lines.append(f"  {message}")
 
     return "\n".join(lines)
 

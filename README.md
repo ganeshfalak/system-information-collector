@@ -4,7 +4,8 @@ A Python CLI that takes a snapshot of this Windows machine (OS, CPU, memory, dis
 
 ## Status
 
-OS, hostname, memory, CPU disks and network comes from CIM.
+All v1 topics come from CIM: OS, hostname, memory, CPU, disks, network, uptime.
+You can note that JSON includes __errors__ (always a list; empty when collection succeeded).
 
 ## How to run
 
