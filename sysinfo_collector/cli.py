@@ -64,3 +64,5 @@ def main():
         print(format_json(snapshot))
     else:
         print(format_text(snapshot))
+
+    return 1 if snapshot.errors else 0
