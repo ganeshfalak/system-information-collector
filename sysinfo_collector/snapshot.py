@@ -34,6 +34,7 @@ class Snapshot:
     memory: MemoryInfo
     disks: list[DiskInfo]
     network: list[NetworkInfo]
+    uptime_seconds: int
 
     def to_dict(self):
         return asdict(self)

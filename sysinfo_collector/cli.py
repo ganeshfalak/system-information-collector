@@ -7,6 +7,7 @@ from .collectors.windows.host import collect_hostname
 from .collectors.windows.memory import collect_memory
 from .collectors.windows.os_info import collect_os
 from .collectors.windows.network import collect_network
+from .collectors.windows.uptime import collect_uptime
 from .snapshot import Snapshot
 
 
@@ -34,6 +35,7 @@ def build_snapshot():
         memory=collect_memory(),
         disks=collect_disk(),
         network=collect_network(),
+        uptime_seconds=collect_uptime(),
     )
 
 
@@ -46,6 +48,7 @@ def format_text(snapshot):
         f" os: {snapshot.os.name} {snapshot.os.version}",
         f" memory_total_bytes: {snapshot.memory.total_bytes}",
         f" memory_available_bytes: {snapshot.memory.available_bytes}",
+        f" uptime_seconds: {snapshot.uptime_seconds}",
     ]
 
     for disk in snapshot.disks:
