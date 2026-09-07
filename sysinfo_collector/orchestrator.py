@@ -7,6 +7,8 @@ from .collectors.windows.network import collect_network
 from .collectors.windows.uptime import collect_uptime
 from .snapshot import CpuInfo, MemoryInfo, OsInfo, Snapshot
 
+from datetime import datetime
+
 def try_collect(errors, name, func, fallback):
     try:
         return func()
@@ -18,6 +20,8 @@ def build_snapshot():
     errors = []
 
     return Snapshot(
+        schema_version=2,
+        collected_at=datetime.now().astimezone().replace(microsecond=0).isoformat(),
         hostname=try_collect(errors, "hostname", collect_hostname, ""),
         cpu=try_collect(errors, "cpu", collect_cpu, CpuInfo(name="", cores=0)),
         os=try_collect(errors, "os", collect_os, OsInfo(name="", version="")),

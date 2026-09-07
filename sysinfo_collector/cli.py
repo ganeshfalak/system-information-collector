@@ -3,6 +3,20 @@ import json
 
 from .orchestrator import build_snapshot
 
+GIB = 1024 ** 3
+
+def format_gib(num_bytes):
+    return f"{num_bytes / GIB:.1f} GiB"
+
+def percent_free(total_bytes, free_bytes):
+    if total_bytes <= 0:
+        return 0
+    return int(round(100 * free_bytes / total_bytes))
+
+def format_uptime(seconds):
+    days = seconds // 86400
+    hours = (seconds % 86400) // 3600
+    return f"{days}d {hours}h"
 
 def build_parser():
     parser = argparse.ArgumentParser(
@@ -20,25 +34,27 @@ def build_parser():
 
 
 def format_text(snapshot):
+    mem = snapshot.memory
 
     lines = [
-        "System Information Collector",
-        f" hostname: {snapshot.hostname}",
-        f" cpu: {snapshot.cpu.name} ({snapshot.cpu.cores} cores)",
-        f" os: {snapshot.os.name} {snapshot.os.version}",
-        f" uptime_seconds: {snapshot.uptime_seconds}",
-        f" memory_total_bytes: {snapshot.memory.total_bytes}",
-        f" memory_available_bytes: {snapshot.memory.available_bytes}",
-        
+        f"=== Snapshot  {snapshot.collected_at}  schema={snapshot.schema_version}  ===",
+        f" hostname  {snapshot.hostname}",
+        f" os        {snapshot.os.name}  {snapshot.os.version}",
+        f" cpu       {snapshot.cpu.name} ({snapshot.cpu.cores}) cores",
+        f" ram       {format_gib(mem.available_bytes)} / {format_gib(mem.total_bytes)} available",
+        f" uptime    {format_uptime(snapshot.uptime_seconds)}",
     ]
 
     for disk in snapshot.disks:
+        pct = percent_free(disk.total_bytes, disk.free_bytes)
+
         lines.append(
-            f" disk {disk.name}: {disk.total_bytes} total, {disk.free_bytes} free"
+            f" disk {disk.name}   {format_gib(disk.total_bytes)}  "
+            f"{format_gib(disk.free_bytes)} free  ({pct}%)"
         )
 
     for adapter in snapshot.network:
-        lines.append(f" network {adapter.name}: {adapter.ipv4}")
+        lines.append(f" network   {adapter.name}:  {adapter.ipv4}")
 
     if snapshot.errors:
         lines.append(" errors:")

@@ -28,6 +28,8 @@ class NetworkInfo:
 
 @dataclass
 class Snapshot:
+    schema_version: int
+    collected_at: str
     hostname: str
     os: OsInfo
     cpu: CpuInfo
