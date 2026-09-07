@@ -1,6 +1,8 @@
 import argparse
 import json
 
+from pathlib import Path
+
 from .orchestrator import build_snapshot
 
 GIB = 1024 ** 3
@@ -28,6 +30,12 @@ def build_parser():
         "--json",
         action="store_true",
         help="Print machine-readable JSON instead of text.",
+    )
+
+    parser.add_argument(
+        "--out",
+        metavar="PATH",
+        help="Write the snapshot to a file (still prints)."
     )
 
     return parser
@@ -71,14 +79,18 @@ def format_json(snapshot):
 
 def main():
     parser = build_parser()
-
     args = parser.parse_args()
-
     snapshot = build_snapshot()
+    output = []
 
     if args.json:
-        print(format_json(snapshot))
+        output = format_json(snapshot)
     else:
-        print(format_text(snapshot))
+        output = format_text(snapshot)
+
+    print(output)
+
+    if args.out:
+        Path(args.out).write_text(output + "\n", encoding="utf-8")
 
     return 1 if snapshot.errors else 0

@@ -42,6 +42,8 @@ python -m sysinfo_collector
 python -m sysinfo_collector          # readable text
 python -m sysinfo_collector --json   # same snapshot as JSON
 python -m sysinfo_collector --help
+python -m sysinfo_collector --out snapshot.txt
+python -m sysinfo_collector --json --out snapshot.json
 ```
 
 | Exit code | Meaning |
