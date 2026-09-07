@@ -1,124 +1,95 @@
 # System Information Collector
 
-A Python CLI that takes a one-shot snapshot of **Windows**:
-OS, CPU, memory, disks, network (IPv4), hostname, and uptime.
+One command. A **Windows** snapshot you can read or pipe.
 
-It talks to Windows through PowerShell / CIM. You can develop in Windows or WSL;
-collection always targets Windows (`powershell.exe`).
+Text is for people (GiB, `%` free, `1d 0h`). JSON is for scripts (bytes, seconds, full `identity`). Same collection either way. Read-only, local, standard library only.
 
-No third-party packages. Standard library only.
+Works from **Windows or WSL**; CIM always runs via `powershell.exe`.
 
-Text is meant to be readable (GiB, percent free, `Xd Xh`). JSON keeps raw
-**bytes** and **seconds**, plus `schema_version` and `collected_at`.
-
-## Status
-
-Collectors are live. Schema version is **2**. If one collector fails, the rest
-still print, failures show up in `errors`, and the process exits with code `1`.
-
-## Setup
-
-Use a separate venv on each OS. They are not interchangeable.
-
-### Windows
+## Run
 
 ```text
-python -m venv .venv-win
-.venv-win\Scripts\activate
+python -m venv .venv-win && .venv-win\Scripts\activate   # Windows
+python3 -m venv .venv-wsl && source .venv-wsl/bin/activate  # WSL
+
 python -m sysinfo_collector
-```
-
-### WSL
-
-```text
-python3 -m venv .venv-wsl
-source .venv-wsl/bin/activate
-python -m sysinfo_collector
-```
-
-## Usage
-
-```text
-python -m sysinfo_collector          # readable text
-python -m sysinfo_collector --json   # same snapshot as JSON
-python -m sysinfo_collector --help
+python -m sysinfo_collector --json
 python -m sysinfo_collector --out snapshot.txt
 python -m sysinfo_collector --json --out snapshot.json
 ```
 
-| Exit code | Meaning |
-| --- | --- |
-| 0 | Every collector succeeded (`errors` is `[]`) |
-| 1 | At least one collector failed (a partial snapshot was still printed) |
+Use a **separate venv** on each OS. `--out` writes the same blob that was printed.
 
-`--help` exits 0.
+| Exit | When |
+| ---: | --- |
+| `0` | every collector succeeded (`errors` is `[]`) |
+| `1` | at least one collector failed (partial snapshot still printed) |
 
-## Sample text
+`--help` exits `0`.
+
+## Sample
 
 ```text
 === Snapshot  2026-09-07T14:22:00-04:00  schema=2  ===
- hostname  EXAMPLE-PC
- os        Microsoft Windows 11  10.0.22631
- cpu       Example CPU (8) cores
- ram       8.0 GiB / 16.0 GiB available
- uptime    1d 0h
- disk C:   238.4 GiB  111.8 GiB free  (47%)
- network   Ethernet:  192.168.1.10
+IDENTITY
+  hostname     EXAMPLE-PC
+  user         EXAMPLE\jsmith
+  join         Workgroup (WORKGROUP)
+  manufacturer Example Vendor
+  model        Example Model
+  serial       ABC1234
+
+OS
+  Microsoft Windows 11  10.0.22631
+  uptime       1d 0h
+
+HARDWARE
+  cpu          Example CPU (8 cores)
+  ram          8.0 GiB / 16.0 GiB available
+
+STORAGE
+  C:  238.4 GiB  111.8 GiB free  (47%)
+
+NETWORK
+  Ethernet  192.168.1.10
 ```
 
-If a collector fails, an `errors:` block is appended, for example:
-
-```text
- errors:
-  disk: boom
-```
-
-## Sample JSON
+On failure, an `errors:` block is appended (`disk: boom`). Text IDENTITY is a **short view**. JSON also has `bios_version`, `domain_role`, and `part_of_domain`.
 
 ```json
 {
   "schema_version": 2,
   "collected_at": "2026-09-07T14:22:00-04:00",
   "hostname": "EXAMPLE-PC",
-  "os": {
-    "name": "Microsoft Windows 11",
-    "version": "10.0.22631"
+  "identity": {
+    "username": "EXAMPLE\\jsmith",
+    "domain": "WORKGROUP",
+    "part_of_domain": false,
+    "join_type": "Workgroup",
+    "manufacturer": "Example Vendor",
+    "model": "Example Model",
+    "serial": "ABC1234",
+    "bios_version": "1.0.0",
+    "domain_role": "Standalone workstation"
   },
-  "cpu": {
-    "name": "Example CPU",
-    "cores": 8
-  },
-  "memory": {
-    "total_bytes": 17179869184,
-    "available_bytes": 8589934592
-  },
-  "disks": [
-    {
-      "name": "C:",
-      "total_bytes": 256000000000,
-      "free_bytes": 120000000000
-    }
-  ],
-  "network": [
-    {
-      "name": "Ethernet",
-      "ipv4": "192.168.1.10"
-    }
-  ],
+  "os": { "name": "Microsoft Windows 11", "version": "10.0.22631" },
+  "cpu": { "name": "Example CPU", "cores": 8 },
+  "memory": { "total_bytes": 17179869184, "available_bytes": 8589934592 },
+  "disks": [{ "name": "C:", "total_bytes": 256000000000, "free_bytes": 120000000000 }],
+  "network": [{ "name": "Ethernet", "ipv4": "192.168.1.10" }],
   "uptime_seconds": 86400,
   "errors": []
 }
 ```
 
-`--json` is the same snapshot as text, not a different collection pass.
-`collected_at` is ISO-8601 with a timezone offset. Memory and disk sizes in JSON
-are **bytes** (the memory collector converts CIM kilobytes). Text converts those
-bytes to GiB. MAC addresses are not collected.
+`collected_at` is ISO-8601 with offset. JSON sizes are **bytes** (CIM memory is converted from KB). No MAC addresses, no upload.
 
 ## Layout
 
-- `sysinfo_collector/__main__.py` — `python -m` entry
-- `sysinfo_collector/cli.py` — flags, text/JSON, exit code
-- `sysinfo_collector/orchestrator.py` — run collectors, record errors
-- `sysinfo_collector/snapshot.py` — portable dataclass schema
-- `sysinfo_collector/collectors/windows/` — CIM via `powershell.exe`
+| Path | Role |
+| --- | --- |
+| `sysinfo_collector/__main__.py` | `python -m` entry, `sys.exit` |
+| `sysinfo_collector/cli.py` | flags, text/JSON, `--out` |
+| `sysinfo_collector/orchestrator.py` | run collectors, record `errors` |
+| `sysinfo_collector/snapshot.py` | dataclass schema (`schema_version` 2) |
+| `sysinfo_collector/collectors/windows/` | CIM via `powershell.exe` |
