@@ -11,19 +11,29 @@ def collect_disk():
         "ConvertTo-Json -Compress"
     )
 
-    data = json.loads(run_powershell(script))
+    raw = run_powershell(script)
+
+    if not raw:
+        return []
+
+    data = json.loads(raw)
 
     if not isinstance(data, list):
         data = [data]
 
     disks = []
-
     for item in data:
+        size = item.get("Size")
+        free = item.get("FreeSpace")
+
+        if size is None or free is None:
+            continue
+
         disks.append(
             DiskInfo(
                 name=item["DeviceID"],
-                total_bytes=int(item["Size"]),
-                free_bytes=int(item["FreeSpace"]),
+                total_bytes=int(size),
+                free_bytes=int(free),
             )
         )
 
