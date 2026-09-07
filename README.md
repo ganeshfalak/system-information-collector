@@ -8,10 +8,13 @@ collection always targets Windows (`powershell.exe`).
 
 No third-party packages. Standard library only.
 
+Text is meant to be readable (GiB, percent free, `Xd Xh`). JSON keeps raw
+**bytes** and **seconds**, plus `schema_version` and `collected_at`.
+
 ## Status
 
-v1 collectors are live. If one collector fails, the rest still print, failures
-show up in `errors`, and the process exits with code `1`.
+Collectors are live. Schema version is **2**. If one collector fails, the rest
+still print, failures show up in `errors`, and the process exits with code `1`.
 
 ## Setup
 
@@ -37,7 +40,7 @@ python -m sysinfo_collector
 
 ```text
 python -m sysinfo_collector          # readable text
-python -m sysinfo_collector --json   # same data as JSON
+python -m sysinfo_collector --json   # same snapshot as JSON
 python -m sysinfo_collector --help
 ```
 
@@ -51,15 +54,14 @@ python -m sysinfo_collector --help
 ## Sample text
 
 ```text
-System Information Collector
- hostname: EXAMPLE-PC
- cpu: Example CPU (8 cores)
- os: Microsoft Windows 11 10.0.22631
- uptime_seconds: 86400
- memory_total_bytes: 17179869184
- memory_available_bytes: 8589934592
- disk C:: 256000000000 total, 120000000000 free
- network Ethernet: 192.168.1.10
+=== Snapshot  2026-09-07T14:22:00-04:00  schema=2  ===
+ hostname  EXAMPLE-PC
+ os        Microsoft Windows 11  10.0.22631
+ cpu       Example CPU (8) cores
+ ram       8.0 GiB / 16.0 GiB available
+ uptime    1d 0h
+ disk C:   238.4 GiB  111.8 GiB free  (47%)
+ network   Ethernet:  192.168.1.10
 ```
 
 If a collector fails, an `errors:` block is appended, for example:
@@ -73,6 +75,8 @@ If a collector fails, an `errors:` block is appended, for example:
 
 ```json
 {
+  "schema_version": 2,
+  "collected_at": "2026-09-07T14:22:00-04:00",
   "hostname": "EXAMPLE-PC",
   "os": {
     "name": "Microsoft Windows 11",
@@ -104,9 +108,10 @@ If a collector fails, an `errors:` block is appended, for example:
 }
 ```
 
-`--json` is the same snapshot as text, not a different collection pass. Memory is in
-**bytes** (CIM kilobytes are converted in the memory collector). MAC addresses are
-not collected.
+`--json` is the same snapshot as text, not a different collection pass.
+`collected_at` is ISO-8601 with a timezone offset. Memory and disk sizes in JSON
+are **bytes** (the memory collector converts CIM kilobytes). Text converts those
+bytes to GiB. MAC addresses are not collected.
 
 ## Layout
 
