@@ -2,7 +2,7 @@
 
 One command. A **Windows** snapshot you can read or pipe.
 
-Text is for people (GiB, `%` free, `1d 0h`). JSON is for scripts (bytes, seconds, full `identity`). Same collection either way. Read-only, local, standard library only.
+Text is for people (GiB, `%` free, `1d 0h`). JSON is for scripts (bytes, seconds, full objects). Same collection either way. Read-only, local, standard library only.
 
 Works from **Windows or WSL**; CIM always runs via `powershell.exe`.
 
@@ -30,7 +30,7 @@ Use a **separate venv** on each OS. `--out` writes the same blob that was printe
 ## Sample
 
 ```text
-=== Snapshot  2026-09-07T14:22:00-04:00  schema=2  ===
+=== Snapshot  2026-09-18T14:22:00-04:00  schema=2  ===
 IDENTITY
   hostname     EXAMPLE-PC
   user         EXAMPLE\jsmith
@@ -40,26 +40,31 @@ IDENTITY
   serial       ABC1234
 
 OS
-  Microsoft Windows 11  10.0.22631
+  Microsoft Windows 11  10.0.22631  64-bit
+  product      Workstation
+  build        22631
+  last boot    2026-09-17T10:00:00
   uptime       1d 0h
 
 HARDWARE
-  cpu          Example CPU (8 cores)
+  cpu          Example CPU (8 cores / 16 logical)
   ram          8.0 GiB / 16.0 GiB available
 
 STORAGE
-  C:  238.4 GiB  111.8 GiB free  (47%)
+  C:  NTFS  238.4 GiB  111.8 GiB free  (47%)
 
 NETWORK
   Ethernet  192.168.1.10
+    gateway  192.168.1.1
+    dns      192.168.1.1, 8.8.8.8
 ```
 
-On failure, an `errors:` block is appended (`disk: boom`). Text IDENTITY is a **short view**. JSON also has `bios_version`, `domain_role`, and `part_of_domain`.
+On failure, an `errors:` block is appended (`disk: boom`). Text is a **short view**: IDENTITY omits `bios_version` / `domain_role`; adapters without a gateway omit those lines. JSON has the full snapshot.
 
 ```json
 {
   "schema_version": 2,
-  "collected_at": "2026-09-07T14:22:00-04:00",
+  "collected_at": "2026-09-18T14:22:00-04:00",
   "hostname": "EXAMPLE-PC",
   "identity": {
     "username": "EXAMPLE\\jsmith",
@@ -72,17 +77,47 @@ On failure, an `errors:` block is appended (`disk: boom`). Text IDENTITY is a **
     "bios_version": "1.0.0",
     "domain_role": "Standalone workstation"
   },
-  "os": { "name": "Microsoft Windows 11", "version": "10.0.22631" },
-  "cpu": { "name": "Example CPU", "cores": 8 },
-  "memory": { "total_bytes": 17179869184, "available_bytes": 8589934592 },
-  "disks": [{ "name": "C:", "total_bytes": 256000000000, "free_bytes": 120000000000 }],
-  "network": [{ "name": "Ethernet", "ipv4": "192.168.1.10" }],
+  "os": {
+    "name": "Microsoft Windows 11",
+    "version": "10.0.22631",
+    "build": "22631",
+    "architecture": "64-bit",
+    "product_type": "Workstation",
+    "display_version": "",
+    "ubr": "",
+    "last_boot": "2026-09-17T10:00:00"
+  },
+  "cpu": {
+    "name": "Example CPU",
+    "cores": 8,
+    "logical_processors": 16
+  },
+  "memory": {
+    "total_bytes": 17179869184,
+    "available_bytes": 8589934592
+  },
+  "disks": [
+    {
+      "name": "C:",
+      "total_bytes": 256000000000,
+      "free_bytes": 120000000000,
+      "file_system": "NTFS"
+    }
+  ],
+  "network": [
+    {
+      "name": "Ethernet",
+      "ipv4": "192.168.1.10",
+      "gateway": "192.168.1.1",
+      "dns": ["192.168.1.1", "8.8.8.8"]
+    }
+  ],
   "uptime_seconds": 86400,
   "errors": []
 }
 ```
 
-`collected_at` is ISO-8601 with offset. JSON sizes are **bytes** (CIM memory is converted from KB). No MAC addresses, no upload.
+`collected_at` is ISO-8601 with offset. JSON sizes are **bytes** (CIM memory is converted from KB). `display_version` and `ubr` are reserved (empty until we read the registry). No MAC addresses, no upload.
 
 ## Layout
 
