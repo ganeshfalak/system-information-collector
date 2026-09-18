@@ -33,6 +33,8 @@ class DiskInfo:
 class NetworkInfo:
     name: str
     ipv4: str
+    gateway: str
+    dns: list[str]
 
 @dataclass
 class IdentityInfo:

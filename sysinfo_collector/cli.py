@@ -86,6 +86,10 @@ def format_text(snapshot):
     lines.append("NETWORK")
     for adapter in snapshot.network:
         lines.append(f"  {adapter.name}  {adapter.ipv4}")
+        if adapter.gateway:
+            lines.append(f"    gateway  {adapter.gateway}")
+        if adapter.dns:
+            lines.append(f"    dns      {', '.join(adapter.dns)}")
 
     if snapshot.errors:
         lines.append("")
