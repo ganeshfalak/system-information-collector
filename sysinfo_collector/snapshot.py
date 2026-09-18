@@ -4,6 +4,12 @@ from dataclasses import asdict, dataclass
 class OsInfo:
     name: str
     version: str
+    build: str
+    architecture: str
+    product_type: str
+    display_version: str
+    ubr: str
+    last_boot: str
 
 @dataclass
 class MemoryInfo:

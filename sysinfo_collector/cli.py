@@ -49,6 +49,7 @@ def format_text(snapshot):
 
     lines = [
         f"=== Snapshot  {snapshot.collected_at}  schema={snapshot.schema_version}  ===",
+
         "IDENTITY",
         f"  hostname     {snapshot.hostname}",
         f"  user         {user}",
@@ -57,14 +58,20 @@ def format_text(snapshot):
         f"  model        {ident.model}",
         f"  serial       {ident.serial}",
         "",
+
         "OS",
-        f"  {snapshot.os.name}  {snapshot.os.version}",
+        f"  {snapshot.os.name}  {snapshot.os.version}  {snapshot.os.architecture}",
+        f"  product      {snapshot.os.product_type}",
+        f"  build        {snapshot.os.build}",
+        f"  last boot    {snapshot.os.last_boot or 'unknown'}",
         f"  uptime       {format_uptime(snapshot.uptime_seconds)}",
         "",
+
         "HARDWARE",
         f"  cpu          {snapshot.cpu.name} ({snapshot.cpu.cores} cores)",
         f"  ram          {format_gib(mem.available_bytes)} / {format_gib(mem.total_bytes)} available",
         "",
+
         "STORAGE",
     ]
 
