@@ -20,12 +20,14 @@ class MemoryInfo:
 class CpuInfo:
     name: str
     cores: int
+    logical_processors: int
 
 @dataclass
 class DiskInfo:
     name: str
     total_bytes: int
     free_bytes: int
+    file_system: str
 
 @dataclass
 class NetworkInfo:

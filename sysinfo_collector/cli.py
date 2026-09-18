@@ -68,7 +68,7 @@ def format_text(snapshot):
         "",
 
         "HARDWARE",
-        f"  cpu          {snapshot.cpu.name} ({snapshot.cpu.cores} cores)",
+        f"  cpu          {snapshot.cpu.name} ({snapshot.cpu.cores} cores / {snapshot.cpu.logical_processors} logical)",
         f"  ram          {format_gib(mem.available_bytes)} / {format_gib(mem.total_bytes)} available",
         "",
 
@@ -78,7 +78,7 @@ def format_text(snapshot):
     for disk in snapshot.disks:
         pct = percent_free(disk.total_bytes, disk.free_bytes)
         lines.append(
-            f"  {disk.name}  {format_gib(disk.total_bytes)}  "
+            f"  {disk.name}  {disk.file_system}  {format_gib(disk.total_bytes)}  "
             f"{format_gib(disk.free_bytes)} free  ({pct}%)"
         )
 

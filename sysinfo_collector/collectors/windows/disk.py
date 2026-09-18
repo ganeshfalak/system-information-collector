@@ -7,7 +7,7 @@ def collect_disk():
 
     script = (
         "Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | "
-        "Select-Object DeviceID, Size, FreeSpace | "
+        "Select-Object DeviceID, Size, FreeSpace, FileSystem | "
         "ConvertTo-Json -Compress"
     )
 
@@ -34,6 +34,7 @@ def collect_disk():
                 name=item["DeviceID"],
                 total_bytes=int(size),
                 free_bytes=int(free),
+                file_system=str(item.get("FileSystem") or ""),
             )
         )
 

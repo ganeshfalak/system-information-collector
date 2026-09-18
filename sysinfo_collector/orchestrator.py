@@ -35,7 +35,7 @@ def build_snapshot():
             bios_version="",
             domain_role="",
         )),
-        cpu=try_collect(errors, "cpu", collect_cpu, CpuInfo(name="", cores=0)),
+        cpu=try_collect(errors, "cpu", collect_cpu, CpuInfo(name="", cores=0, logical_processors=0)),
         os=try_collect(errors, "os", collect_os, OsInfo(name="", version="", build="", architecture="", product_type="", display_version="", ubr="", last_boot="")),
         memory=try_collect(errors, "memory", collect_memory, MemoryInfo(total_bytes=0, available_bytes=0)),
         disks=try_collect(errors, "disk", collect_disk, []),
