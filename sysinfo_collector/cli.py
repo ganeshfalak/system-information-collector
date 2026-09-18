@@ -1,11 +1,28 @@
 import argparse
 import json
 
+import subprocess
+import sys
+
 from pathlib import Path
 
 from .orchestrator import build_snapshot
 
 GIB = 1024 ** 3
+
+def copy_to_clipboard(text):
+    try:
+        subprocess.run(
+            ["clip.exe"],
+            input=text,
+            text=True,
+            encoding="utf-8",
+            check=True,
+        )
+
+    except Exception as exc:
+        print(f"warning: could not copy to clipboard: {exc}", file=sys.stderr)
+
 
 def format_gib(num_bytes):
     return f"{num_bytes / GIB:.1f} GiB"
@@ -36,6 +53,12 @@ def build_parser():
         "--out",
         metavar="PATH",
         help="Write the snapshot to a file (still prints)."
+    )
+
+    parser.add_argument(
+        "--copy",
+        action="store_true",
+        help="Copy the snapshot to the clipboard (still prints).",
     )
 
     return parser
@@ -119,5 +142,8 @@ def main():
 
     if args.out:
         Path(args.out).write_text(output + "\n", encoding="utf-8")
+
+    if args.copy:
+        copy_to_clipboard(output + "\n")
 
     return 1 if snapshot.errors else 0
