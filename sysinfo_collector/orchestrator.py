@@ -6,6 +6,9 @@ from .collectors.windows.os_info import collect_os
 from .collectors.windows.network import collect_network
 from .collectors.windows.uptime import collect_uptime
 from .collectors.windows.identity import collect_identity
+
+from .findings import evaluate_findings
+
 from .snapshot import CpuInfo, MemoryInfo, OsInfo, IdentityInfo, Snapshot
 
 from datetime import datetime
@@ -20,7 +23,7 @@ def try_collect(errors, name, func, fallback):
 def build_snapshot():
     errors = []
 
-    return Snapshot(
+    snapshot = Snapshot(
         schema_version=2,
         collected_at=datetime.now().astimezone().replace(microsecond=0).isoformat(),
         hostname=try_collect(errors, "hostname", collect_hostname, ""),
@@ -42,4 +45,9 @@ def build_snapshot():
         network=try_collect(errors, "network", collect_network, []),
         uptime_seconds=try_collect(errors, "uptime", collect_uptime, 0),
         errors=errors,
+        findings=[],
     )
+
+    snapshot.findings = evaluate_findings(snapshot)
+
+    return snapshot

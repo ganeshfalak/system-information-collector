@@ -72,7 +72,18 @@ def format_text(snapshot):
 
     lines = [
         f"=== Snapshot  {snapshot.collected_at}  schema={snapshot.schema_version}  ===",
+        "FINDINGS",
+    ]
+    if snapshot.findings:
+        marks = {"critical": "!", "warning": "!", "info": "i"}
+        for finding in snapshot.findings:
+            mark = marks.get(finding.severity, "i")
+            lines.append(f"  {mark} {finding.message}")
+    else:
+        lines.append("  (none)")
 
+    lines.extend([
+        "",
         "IDENTITY",
         f"  hostname     {snapshot.hostname}",
         f"  user         {user}",
@@ -96,7 +107,7 @@ def format_text(snapshot):
         "",
 
         "STORAGE",
-    ]
+    ])
 
     for disk in snapshot.disks:
         pct = percent_free(disk.total_bytes, disk.free_bytes)

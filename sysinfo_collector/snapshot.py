@@ -1,6 +1,12 @@
 from dataclasses import asdict, dataclass
 
 @dataclass
+class Finding:
+    severity: str
+    code: str
+    message: str
+
+@dataclass
 class OsInfo:
     name: str
     version: str
@@ -61,6 +67,7 @@ class Snapshot:
     network: list[NetworkInfo]
     uptime_seconds: int
     errors: list[str]
+    findings: list[Finding]
 
     def to_dict(self):
         return asdict(self)
