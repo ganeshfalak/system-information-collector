@@ -1,36 +1,73 @@
 # System Information Collector
 
-One command. A **Windows** snapshot you can read or pipe.
+Local, read-only **Windows** snapshot: identity, OS, CPU, memory, disks, network, uptime, plus a short findings list.
 
-Text is for people (GiB, `%` free, `1d 0h`). JSON is for scripts (bytes, seconds, full objects). Same collection either way. Read-only, local, standard library only.
+One collection pass. **Text** is for people (GiB, `%` free, `Xd Xh`). **JSON** is the full contract (bytes, seconds, every field). Standard library only — no pip packages.
 
-Works from **Windows or WSL**; CIM always runs via `powershell.exe`.
+CIM runs through `powershell.exe`, so the data is always the **Windows** machine even if you launch Python from WSL.
 
-## Run
+## Requirements
+
+- Python 3.10+ (`list[str]` syntax)
+- Windows, or WSL with `powershell.exe` on `PATH`
+- Permission to run `Get-CimInstance` (normal local user is enough for these classes)
+
+Not collected: MAC addresses, process lists, event logs, registry reboot keys, uploads.
+
+## Setup
+
+Use a **separate** virtualenv per OS; a Windows venv will not run under WSL and vice versa.
 
 ```text
-python -m venv .venv-win && .venv-win\Scripts\activate   # Windows
-python3 -m venv .venv-wsl && source .venv-wsl/bin/activate  # WSL
+# Windows
+python -m venv .venv-win
+.venv-win\Scripts\activate
 
+# WSL
+python3 -m venv .venv-wsl
+source .venv-wsl/bin/activate
+```
+
+No `pip install`. Run from the repo root so `python -m sysinfo_collector` can see the package.
+
+## Usage
+
+```text
 python -m sysinfo_collector
 python -m sysinfo_collector --json
 python -m sysinfo_collector --out snapshot.txt
 python -m sysinfo_collector --json --out snapshot.json
+python -m sysinfo_collector --copy
 ```
 
-Use a **separate venv** on each OS. `--out` writes the same blob that was printed.
+| Flag | Effect |
+| --- | --- |
+| *(none)* | Print ticket-style text |
+| `--json` | Print the same snapshot as JSON |
+| `--out PATH` | Also write that blob to a file |
+| `--copy` | Also copy that blob to the clipboard via `clip.exe` |
+| `-h` / `--help` | Argparse help; exit `0` |
 
-| Exit | When |
+`--out` and `--copy` use **whatever was printed** (text or JSON). Clipboard failure prints a warning on stderr and does not change the exit code.
+
+On Windows you can double-click `collect.cmd` (uses `py -3` then `python`, passes `--copy`, then `pause`).
+
+| Exit | Meaning |
 | ---: | --- |
-| `0` | every collector succeeded (`errors` is `[]`) |
-| `1` | at least one collector failed (partial snapshot still printed) |
+| `0` | Every collector succeeded (`errors` is `[]`) |
+| `1` | At least one collector failed; a **partial** snapshot was still printed |
 
-`--help` exits `0`.
+Findings (disk low, generic serial, …) do **not** change the exit code.
 
-## Sample
+## Example
+
+Text (fake host). `FINDINGS` is a curated view; `(none)` means no rules fired.
 
 ```text
-=== Snapshot  2026-09-18T14:22:00-04:00  schema=2  ===
+=== Snapshot  2026-09-19T14:22:00-04:00  schema=2  ===
+FINDINGS
+  (none)
+
 IDENTITY
   hostname     EXAMPLE-PC
   user         EXAMPLE\jsmith
@@ -43,7 +80,7 @@ OS
   Microsoft Windows 11  10.0.22631  64-bit
   product      Workstation
   build        22631
-  last boot    2026-09-17T10:00:00
+  last boot    2026-09-18T10:00:00
   uptime       1d 0h
 
 HARDWARE
@@ -59,12 +96,14 @@ NETWORK
     dns      192.168.1.1, 8.8.8.8
 ```
 
-On failure, an `errors:` block is appended (`disk: boom`). Text is a **short view**: IDENTITY omits `bios_version` / `domain_role`; adapters without a gateway omit those lines. JSON has the full snapshot.
+If a collector raises, that topic is filled with a placeholder and an `errors:` line is appended (`disk: boom`). IDENTITY text omits `bios_version` and `domain_role`; they are in JSON. Adapters without a gateway omit those extra lines.
+
+JSON is the same snapshot (`schema_version` 2). Sizes are **bytes** (memory is converted from CIM kilobytes). `collected_at` is ISO-8601 with offset. `display_version` and `ubr` are reserved and currently `""`.
 
 ```json
 {
   "schema_version": 2,
-  "collected_at": "2026-09-18T14:22:00-04:00",
+  "collected_at": "2026-09-19T14:22:00-04:00",
   "hostname": "EXAMPLE-PC",
   "identity": {
     "username": "EXAMPLE\\jsmith",
@@ -85,7 +124,7 @@ On failure, an `errors:` block is appended (`disk: boom`). Text is a **short vie
     "product_type": "Workstation",
     "display_version": "",
     "ubr": "",
-    "last_boot": "2026-09-17T10:00:00"
+    "last_boot": "2026-09-18T10:00:00"
   },
   "cpu": {
     "name": "Example CPU",
@@ -113,18 +152,57 @@ On failure, an `errors:` block is appended (`disk: boom`). Text is a **short vie
     }
   ],
   "uptime_seconds": 86400,
-  "errors": []
+  "errors": [],
+  "findings": []
 }
 ```
 
-`collected_at` is ISO-8601 with offset. JSON sizes are **bytes** (CIM memory is converted from KB). `display_version` and `ubr` are reserved (empty until we read the registry). No MAC addresses, no upload.
+A finding object looks like `{"severity": "warning", "code": "disk_low", "message": "disk C: 8.0 GiB free (9%)"}`.
+
+## Findings
+
+Evaluated in `findings.py` from the finished snapshot. No extra CIM.
+
+| severity | code | When |
+| --- | --- | --- |
+| critical | `disk_critical` | any local disk free &lt; 5 GiB **or** free % &lt; 5 |
+| warning | `disk_low` | free &lt; 10 GiB and not already critical |
+| warning | `no_ipv4` | `network` is empty |
+| info | `long_uptime` | uptime &gt; 14 days |
+| info | `serial_generic` | serial empty / `0` / OEM placeholder strings |
+
+Text marks: `!` critical/warning, `i` info.
+
+## How it works
+
+```text
+python -m sysinfo_collector
+  → __main__.py          entry, sys.exit
+  → cli.py               flags, format, --out / --copy
+  → orchestrator.py      run each collector, catch failures
+  → collectors/windows   Get-CimInstance via powershell.exe
+  → snapshot.py          dataclasses (schema 2)
+  → findings.py          rules on the finished snapshot
+  → text or JSON         two views of the same object
+```
+
+Each collector either returns a value or raises. The orchestrator records `"{name}: {exc}"` and uses a placeholder so the rest of the snapshot still prints. Collectors never print; formatters never call CIM.
 
 ## Layout
 
 | Path | Role |
 | --- | --- |
-| `sysinfo_collector/__main__.py` | `python -m` entry, `sys.exit` |
-| `sysinfo_collector/cli.py` | flags, text/JSON, `--out` |
-| `sysinfo_collector/orchestrator.py` | run collectors, record `errors` |
-| `sysinfo_collector/snapshot.py` | dataclass schema (`schema_version` 2) |
-| `sysinfo_collector/collectors/windows/` | CIM via `powershell.exe` |
+| `collect.cmd` | Windows double-click helper (`--copy`) |
+| `sysinfo_collector/__main__.py` | `python -m` entry |
+| `sysinfo_collector/cli.py` | argparse, text/JSON, file, clipboard |
+| `sysinfo_collector/orchestrator.py` | `try_collect`, assemble `Snapshot` |
+| `sysinfo_collector/snapshot.py` | schema |
+| `sysinfo_collector/findings.py` | severity rules |
+| `sysinfo_collector/collectors/windows/` | CIM helpers and collectors |
+
+## Limitations
+
+- Windows-only collection (portable field names, no Linux collectors).
+- Each collector starts its own `powershell.exe` (noticeable latency; not a second data source).
+- `clip.exe` is Windows; `--copy` from a stripped environment warns and continues.
+- Not an agent, monitor, or remoting tool (`-ComputerName` is out of scope).
